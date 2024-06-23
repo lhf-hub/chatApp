@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lee.server.mapper.UserMapper">
+
+    <!-- ResultMap for User -->
+    <resultMap id="UserResultMap" type="com.lee.server.pojo.User">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="password" column="password"/>
+        <result property="profilePicture" column="profile_picture" jdbcType="BLOB"/>
+        <result property="createdAt" column="created_at" jdbcType="TIMESTAMP"/>
+        <result property="updatedAt" column="updated_at" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 插入新用户 -->
+    <insert id="register" parameterType="com.lee.server.pojo.User">
+        INSERT INTO users (id, password)
+        VALUES (#{id}, #{password})
+    </insert>
+
+    <!-- 用户登录 -->
+    <select id="login" parameterType="map" resultMap="UserResultMap">
+        SELECT id, name, password, profile_picture, created_at, updated_at
+        FROM users
+        WHERE id = #{id} AND password = #{password}
+    </select>
+
+    <!-- 查找所有用户 -->
+    <select id="findAll" resultMap="UserResultMap">
+        SELECT id, name, password, profile_picture, created_at, updated_at
+        FROM users
+    </select>
+
+    <!-- 通过ID查找用户 -->
+    <select id="findById" parameterType="string" resultMap="UserResultMap">
+        SELECT id, name, password, profile_picture, created_at, updated_at
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+    <!-- 通过名字模糊查找用户 -->
+    <select id="findByName" parameterType="string" resultMap="UserResultMap">
+        SELECT id, name, password, profile_picture, created_at, updated_at
+        FROM users
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+    </select>
+
+    <!-- 更新用户信息 -->
+    <update id="update" parameterType="com.lee.server.pojo.User">
+        UPDATE users
+        <if test="name != null">SET name = #{name},</if>
+        <if test="password != null">SET password = #{password},</if>
+        <if test="profilePicture != null">SET profile_picture = #{profilePicture},</if>
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除用户 -->
+    <delete id="delete" parameterType="string">
+        DELETE FROM users
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lee.server.mapper.GroupMapper">
+    <resultMap id="GroupResultMap" type="com.lee.server.pojo.Group">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="owner_id" property="ownerId"/>
+        <result column="description" property="description"/>
+        <result column="profile_picture" property="profilePicture" jdbcType="BLOB"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findGroupById" resultMap="GroupResultMap">
+        SELECT * FROM `groups` WHERE id = #{groupId}
+    </select>
+
+    <select id="findGroupsByOwnerId" resultMap="GroupResultMap">
+        SELECT * FROM `groups` WHERE owner_id = #{userId}
+    </select>
+
+    <select id="findGroupsByMemberId" resultMap="GroupResultMap">
+        SELECT g.* FROM `groups` g
+                            JOIN `group_members` gm ON g.id = gm.group_id
+        WHERE gm.role = 'MEMBER' AND gm.user_id = #{userId}
+    </select>
+
+    <insert id="createGroup" parameterType="com.lee.server.pojo.Group">
+        INSERT INTO `groups` (id, name, owner_id, description, profile_picture, created_at, updated_at)
+        VALUES (#{id},
+                <if test="name != null">#{name}</if>,
+                #{ownerId},
+                <if test="description != null">#{description}</if>,
+                #{profilePicture}, NOW(), NOW())
+    </insert>
+
+    <update id="updateGroup" parameterType="com.lee.server.pojo.Group">
+        UPDATE `groups`
+        <set>
+            <if test="ownerId != null">owner_id = #{ownerId},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="profilePicture != null">profile_picture = #{profilePicture},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteGroup" parameterType="map">
+        DELETE FROM `groups` WHERE id = #{groupId} AND owner_id = #{ownerId}
+    </delete>
+</mapper>

@@ -1,0 +1,128 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lee.server.mapper.FriendMapper">
+
+    <!-- ResultMap for Friend -->
+    <resultMap id="FriendResultMap" type="com.lee.server.pojo.Friend">
+        <id property="key.userId" column="user_id"/>
+        <id property="key.friendId" column="friend_id"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!-- 查找自己的某一位好友 -->
+    <select id="findByPrimaryKey" parameterType="com.lee.server.pojo.FriendKey" resultMap="FriendResultMap">
+        SELECT * FROM friendships
+        WHERE user_id = #{userId} AND friend_id = #{friendId}
+    </select>
+
+    <!-- 查找自己的所有好友 -->
+    <select id="findByUserId" parameterType="string" resultMap="FriendResultMap">
+        SELECT * FROM friendships
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 按名模糊查好友同时也可以按id查好友 -->
+    <select id="findByNameOrFriendId" parameterType="map" resultMap="FriendResultMap">
+        SELECT f.* FROM friendships f
+                            JOIN users u ON f.friend_id = u.id
+        WHERE f.user_id = #{userId}
+          AND (u.name LIKE CONCAT('%', #{nameOrFriendId}, '%') OR f.friend_id = #{nameOrFriendId})
+    </select>
+
+    <!-- 查找状态为pendingReceive的记录 - 可接受好友请求 -->
+    <select id="findCanAccept" parameterType="string" resultMap="FriendResultMap">
+        SELECT * FROM friendships
+        WHERE friend_id = #{userId} AND status = 'pendingReceive'
+    </select>
+
+    <!-- 插入一条记录 -->
+    <insert id="insert" parameterType="map">
+        INSERT INTO friendships (user_id, friend_id, status, created_at)
+        VALUES (#{userId}, #{friendId}, #{status}, NOW())
+    </insert>
+
+    <!-- 更新一条记录 -->
+    <update id="update" parameterType="map">
+        UPDATE friendships
+        SET status = #{status}, created_at = NOW()
+        WHERE user_id = #{userId} AND friend_id = #{friendId}
+    </update>
+
+    <!-- 为自己添加好友，并修改状态至pendingSend -->
+    <insert id="addFriend" parameterType="com.lee.server.pojo.FriendKey">
+        INSERT INTO friendships (user_id, friend_id, status, created_at)
+        VALUES (#{userId}, #{friendId}, 'pendingSend', NOW())
+    </insert>
+
+    <insert id="addFriendReverse" parameterType="com.lee.server.pojo.FriendKey">
+        INSERT INTO friendships (user_id, friend_id, status, created_at)
+        VALUES (#{friendId}, #{userId}, 'pendingReceive', NOW())
+    </insert>
+
+    <!-- 接受好友请求 - 第一步 -->
+    <update id="acceptFriendFirstStep" parameterType="com.lee.server.pojo.FriendKey">
+        UPDATE friendships
+        SET status = 'accepted'
+        WHERE user_id = #{userId} AND friend_id = #{friendId} AND status = 'pendingReceive';
+    </update>
+
+    <!-- 接受好友请求 - 第二步 -->
+    <update id="acceptFriendSecondStep" parameterType="com.lee.server.pojo.FriendKey">
+        UPDATE friendships
+        SET status = 'accepted'
+        WHERE user_id = #{friendId} AND friend_id = #{userId} AND status = 'pendingSend';
+    </update>
+
+    <!-- 拒绝好友请求 - 第一步 -->
+    <update id="rejectFriendFirstStep" parameterType="com.lee.server.pojo.FriendKey">
+        UPDATE friendships
+        SET status = 'rejectedSend'
+        WHERE user_id = #{friendId} AND friend_id = #{userId} AND status = 'pendingReceive';
+    </update>
+
+    <!-- 拒绝好友请求 - 第二步 -->
+    <update id="rejectFriendSecondStep" parameterType="com.lee.server.pojo.FriendKey">
+        UPDATE friendships
+        SET status = 'rejectedReceive'
+        WHERE user_id = #{userId} AND friend_id = #{friendId};
+    </update>
+
+    <!-- 拉黑好友 - 第一步 -->
+    <update id="blockFriendFirstStep" parameterType="com.lee.server.pojo.FriendKey">
+        UPDATE friendships
+        SET status = 'blockedSend'
+        WHERE user_id = #{userId} AND friend_id = #{friendId} AND status = 'accepted';
+    </update>
+
+    <!-- 拉黑好友 - 第二步 -->
+    <update id="blockFriendSecondStep" parameterType="com.lee.server.pojo.FriendKey">
+        UPDATE friendships
+        SET status = 'blockedReceive'
+        WHERE user_id = #{friendId} AND friend_id = #{userId} AND status = 'accepted';
+    </update>
+
+    <!-- 解除拉黑好友 - 第一步 -->
+    <update id="unblockFriendFirstStep" parameterType="com.lee.server.pojo.FriendKey">
+        UPDATE friendships
+        SET status = 'accepted'
+        WHERE user_id = #{userId} AND friend_id = #{friendId} AND status = 'blockedSend';
+    </update>
+
+    <!-- 解除拉黑好友 - 第二步 -->
+    <update id="unblockFriendSecondStep" parameterType="com.lee.server.pojo.FriendKey">
+        UPDATE friendships
+        SET status = 'accepted'
+        WHERE user_id = #{friendId} AND friend_id = #{userId} AND status = 'blockedReceive';
+    </update>
+
+    <!-- 删除好友 -->
+    <delete id="deleteFriend" parameterType="com.lee.server.pojo.FriendKey">
+        DELETE FROM friendships
+        WHERE (user_id = #{userId} AND friend_id = #{friendId}) OR (user_id = #{friendId} AND friend_id = #{userId})
+            AND (status = 'accepted' OR status = 'blockedSend' OR status = 'blockedReceive');
+    </delete>
+
+</mapper>

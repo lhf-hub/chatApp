@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: server
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:mysql://localhost:3306/chatapp?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT
+    username: root
+    password: lhf20040208
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+
+  security:
+    user:
+      name: admin
+      password: admin
+mybatis:
+  config-location: classpath:mybatis-config.xml
+  mapper-locations: classpath:mapper/*.xml #mapper文件的路径
+  type-aliases-package: com.lee.server.pojo #实体类的包路径
+
+server:
+  port: 8080
+  servlet:
+    context-path: /chatApp     #项目访问路径
+    session:
+      cookie:
+        max-age: 1800   #cookie过期时间
+      timeout: 1800    #session过期时间
+  tomcat:
+    uri-encoding: utf-8
+    threads:
+      min-spare: 25
+      max: 200
+logging:
+  file:
+    name: server.log
+  level:
+    root: info
+    com.lee.server: debug
+#debug: true
+

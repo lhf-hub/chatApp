@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lee.server.mapper.MessageMapper">
+<!--    // 映射-->
+    <resultMap id="MessageResultMap" type="com.lee.server.pojo.Message">
+        <id column="id" property="id"/>
+        <result column="sender_id" property="senderId"/>
+        <result column="receiver_id" property="receiverId"/>
+        <result column="group_id" property="groupId"/>
+        <result column="content" property="content" jdbcType="BLOB"/>
+        <result column="message_type" property="messageType"/>
+        <result column="file_url" property="fileUrl"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    <insert id="save" parameterType="com.lee.server.pojo.Message">
+        INSERT INTO messages (id, sender_id, receiver_id, group_id, content, message_type, file_url,status, created_at)
+        VALUES (#{id}, #{senderId}, #{receiverId}, #{groupId}, #{content}, #{messageType}, #{fileUrl}, #{status}, NOW())
+    </insert>
+
+    <select id="findAllByReceiverId" resultMap="MessageResultMap">
+        SELECT * FROM messages WHERE receiver_id = #{receiverId}
+    </select>
+
+    <delete id="deleteAllByReceiverId" parameterType="string">
+        DELETE FROM messages WHERE receiver_id = #{receiverId}
+    </delete>
+
+<!--    <delete id="deleteAllByGroupId" parameterType="string">-->
+<!--        DELETE FROM messages WHERE group_id = #{groupId}-->
+<!--    </delete>-->
+<!--    -->
+<!--    <delete id="deleteAllBySenderId" parameterType="string">-->
+<!--        DELETE FROM messages WHERE sender_id = #{senderId}-->
+<!--    </delete>-->
+</mapper>

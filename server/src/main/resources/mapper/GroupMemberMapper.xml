@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lee.server.mapper.GroupMemberMapper">
+    <resultMap id="GroupMemberResultMap" type="com.lee.server.pojo.GroupMember">
+        <id column="group_id" property="groupId"/>
+        <id column="user_id" property="userId"/>
+        <result column="role" property="role"/>
+        <result column="joined_at" property="joinedAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="getGroupIdsByUserId" resultType="java.lang.String">
+        SELECT group_id FROM group_members WHERE user_id = #{userId}
+    </select>
+
+    <select id="findGroupMembers" resultMap="GroupMemberResultMap">
+        SELECT * FROM group_members WHERE group_id = #{groupId}
+    </select>
+
+    <select id="findGroupMembersByNameOrId" resultMap="GroupMemberResultMap">
+        SELECT gm.* FROM group_members gm
+                             JOIN users u ON gm.user_id = u.id
+        WHERE group_id = #{groupId} AND (u.name LIKE CONCAT('%', #{nameOrId}, '%') OR u.id = #{nameOrId})
+    </select>
+
+    <select id="isGroupMember" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM group_members WHERE group_id = #{groupId} AND user_id = #{userId}
+    </select>
+
+    <select id="isGroupOwner" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM groups WHERE id = #{groupId} AND owner_id = #{userId}
+    </select>
+
+<!--    // 要判空-->
+    <insert id="addGroupMember" parameterType="com.lee.server.pojo.GroupMember">
+        INSERT INTO group_members (group_id, user_id, role, joined_at)
+        VALUES
+        (
+        #{groupId},
+        #{userId},
+        <if test="role != null">#{role}</if>
+        <if test="role == null">'member'</if>,
+        NOW()
+        )
+    </insert>
+
+
+
+<!--    添加多个 且判空-->
+    <insert id="addGroupMembers" parameterType="java.util.List">
+        INSERT INTO group_members (group_id, user_id, role, joined_at)
+        VALUES
+        <foreach collection="groupMembers" item="groupMember" separator=",">
+            (
+            #{groupMember.groupId},
+            #{groupMember.userId},
+            'member',
+            NOW()
+            )
+        </foreach>
+    </insert>
+
+
+
+
+
+
+    <delete id="removeGroupMember" parameterType="map">
+        DELETE FROM group_members WHERE group_id = #{groupId} AND user_id = #{userId}
+    </delete>
+
+    <delete id="removeAllGroupMembers" parameterType="string">
+        DELETE FROM group_members WHERE group_id = #{groupId}
+    </delete>
+
+    <delete id="removeAllGroupMembersExceptOwner" parameterType="map">
+        DELETE FROM group_members WHERE group_id = #{groupId} AND user_id != #{ownerId}
+    </delete>
+
+    <update id="demoteOldOwner" parameterType="map">
+        UPDATE group_members SET role = 'member' WHERE group_id = #{groupId} AND user_id = #{ownerId}
+    </update>
+
+    <update id="setGroupNewOwner" parameterType="map">
+        UPDATE group_members SET role = 'owner' WHERE group_id = #{groupId} AND user_id = #{newOwnerId}
+    </update>
+</mapper>
+
+

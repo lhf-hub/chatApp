@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <script>
+        window.onload = function ()
+        {
+            // const socket = io('http://localhost:3000');
+            // // 发送消息
+            // socket.emit('message', 'Hello World');
+
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("GET", "http://localhost:8080/chatApp/user/2", true);
+            xmlhttp.send();
+            alert("发送请求")
+            xmlhttp.onreadystatechange = function ()
+            {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+                {
+                    console.log(xmlhttp.response);
+                }
+            }
+        }
+
+    </script>
+</head>
+<body>
+
+
+</body>
+</html>
